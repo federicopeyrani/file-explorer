@@ -1,4 +1,4 @@
-import { FileDescriptor } from "@/app/[[...path]]/@files/types";
+import { FileDescriptor } from "@/app/(main)/[[...path]]/@files/types";
 import { useDragAndDrop, Key } from "@adobe/react-spectrum";
 import { error } from "@/utils";
 
@@ -9,7 +9,10 @@ export const useDragAndDropMove = ({
   onMove,
 }: {
   files: FileDescriptor[];
-  onMove?: (source: FileDescriptor[], target: FileDescriptor) => void;
+  onMove?: (payload: {
+    source: FileDescriptor[];
+    target: FileDescriptor;
+  }) => void;
 }) => {
   const findOrFail = (key: Key) =>
     files.find((file) => file.key === key) ?? error("Failed to find file");
@@ -47,7 +50,10 @@ export const useDragAndDropMove = ({
         )
         .map(async (key) => findOrFail(await key));
 
-      onMove?.(await Promise.all(sourceFiles), targetFile);
+      onMove?.({
+        source: await Promise.all(sourceFiles),
+        target: targetFile,
+      });
     },
   });
 

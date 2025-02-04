@@ -1,20 +1,23 @@
 import { readdir } from "node:fs/promises";
-import { FileDescriptor } from "@/app/[[...path]]/@files/types";
+import { FileDescriptor } from "@/app/(main)/[[...path]]/@files/types";
 import {
   encode,
   encodedToURL,
   joinPathToString,
   uriPathToFileURL,
-} from "@/app/[[...path]]/utils";
-import { URIPath } from "@/app/[[...path]]/types";
+} from "@/app/(main)/[[...path]]/utils";
+import { URIPath } from "@/app/(main)/[[...path]]/types";
 import { SortDescriptor } from "@react-types/shared";
 import { base } from "@/config";
 
-export const getFiles = async (uriPath: URIPath) => {
+export const getFiles = async (
+  uriPath: URIPath,
+  descriptor?: SortDescriptor,
+) => {
   const url = uriPathToFileURL(base, uriPath);
   const node = await readdir(url);
 
-  return (
+  const files = (
     await Promise.all(
       node
         .map(async (name): Promise<FileDescriptor | undefined> => {
@@ -34,6 +37,12 @@ export const getFiles = async (uriPath: URIPath) => {
         .map((promise) => promise.catch(console.warn)),
     )
   ).filter((file): file is FileDescriptor => file !== undefined);
+
+  if (!descriptor) {
+    return files;
+  }
+
+  return sortFiles(files, descriptor);
 };
 
 export const sortFiles = async (

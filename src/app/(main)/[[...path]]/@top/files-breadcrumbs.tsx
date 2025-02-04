@@ -1,8 +1,8 @@
 "use client";
 
 import { Breadcrumbs, Item } from "@adobe/react-spectrum";
-import { decodedToURL } from "@/app/[[...path]]/utils";
-import { NotEncoded } from "@/app/[[...path]]/types";
+import { decodedToURL } from "@/app/(main)/[[...path]]/utils";
+import { NotEncoded } from "@/app/(main)/[[...path]]/types";
 
 export const FilesBreadcrumbs = ({
   url,

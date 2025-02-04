@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import path from "path";
 import { Key } from "@react-types/shared";
-import { Encoded, NotEncoded, URIPath } from "@/app/[[...path]]/types";
+import { Encoded, NotEncoded, URIPath } from "@/app/(main)/[[...path]]/types";
 
 export const emptyPath: URIPath = [] as unknown as URIPath;
 

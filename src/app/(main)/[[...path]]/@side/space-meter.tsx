@@ -1,7 +1,7 @@
 "use client";
 
 import { Meter } from "@adobe/react-spectrum";
-import { formatSize } from "@/app/[[...path]]/utils";
+import { formatSize } from "@/app/(main)/[[...path]]/utils";
 
 export const SpaceMeter = ({
   label,
