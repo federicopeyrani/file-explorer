@@ -1,27 +1,22 @@
 "use client";
 
 import { Item, ListBox } from "@adobe/react-spectrum";
-import { keyed, useCool } from "@/app/[[...path]]/utils";
-import { usePathname } from "next/navigation";
+import { Key } from "@react-types/shared";
 
 export type Option = {
+  key: Key;
   label: string;
-  value: string;
+  url: string;
 };
 
-const getKey = keyed((option: Option) => option.value);
-
-export const QuickNav = ({ options }: { options: Option[] }) => {
-  const pathname = usePathname();
-  const optionsWithKey = useCool(getKey, options);
-
-  return (
-    <ListBox
-      selectionMode="single"
-      selectedKeys={[pathname]}
-      items={optionsWithKey}
-    >
-      {(option) => <Item href={option.value}>{option.label}</Item>}
-    </ListBox>
-  );
-};
+export const QuickNav = ({
+  selectedKey,
+  options,
+}: {
+  selectedKey: Key;
+  options: Option[];
+}) => (
+  <ListBox selectionMode="single" selectedKeys={[selectedKey]} items={options}>
+    {(option) => <Item href={option.url}>{option.label}</Item>}
+  </ListBox>
+);

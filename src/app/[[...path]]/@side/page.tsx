@@ -1,27 +1,32 @@
 import { PathParams } from "@/app/[[...path]]/types";
-import { statfs } from "node:fs/promises";
-import { uriPathToFileURL } from "@/app/[[...path]]/utils";
-import { SpaceMeter } from "@/app/[[...path]]/@side/space-meter";
+import {
+  emptyPath,
+  encodedToURL,
+  uriPathToFileURL,
+} from "@/app/[[...path]]/utils";
 import { QuickNav } from "@/app/[[...path]]/@side/quick-nav";
-import { base, disksEntries, quickLinksEntries } from "@/config";
+import { base, quickLinksEntries } from "@/config";
+import { Space } from "@/app/[[...path]]/@side/space";
+import { Suspense } from "react";
 
 export default async function Page({ params }: PathParams) {
-  const { path } = await params;
+  const { path = emptyPath } = await params;
   const fileURL = uriPathToFileURL(base, path);
-  const space = await statfs(fileURL);
 
   return (
     <div className="flex flex-col items-stretch gap-8 overflow-hidden">
-      <QuickNav options={quickLinksEntries} />
+      <QuickNav
+        selectedKey={decodeURIComponent(encodedToURL(...path))}
+        options={quickLinksEntries.map((entry) => ({
+          key: entry.value,
+          label: entry.label,
+          url: entry.value,
+        }))}
+      />
 
-      {disksEntries.map((disk) => (
-        <SpaceMeter
-          key={disk.value}
-          label={disk.label}
-          free={space.bsize * space.bavail}
-          total={space.bsize * space.blocks}
-        />
-      ))}
+      <Suspense>
+        <Space url={fileURL} />
+      </Suspense>
     </div>
   );
 }
