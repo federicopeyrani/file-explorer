@@ -1,4 +1,7 @@
-import { Action, FileDescriptor } from "@/app/(main)/[[...path]]/@files/types";
+import {
+  FilesAction,
+  FileDescriptor,
+} from "@/app/(main)/[[...path]]/@files/types";
 import { ActionBar, Item, Selection } from "@adobe/react-spectrum";
 import { Icon } from "@/components";
 import { ActionBarProps } from "@react-types/actionbar";
@@ -11,7 +14,7 @@ export const FilesActionBar = ({
 }: {
   selectedKeys: Selection;
   files: FileDescriptor[];
-  action: (payload: Action) => void;
+  action: (payload: FilesAction) => void;
 } & Omit<ActionBarProps<object>, "children">) => (
   <ActionBar
     isEmphasized

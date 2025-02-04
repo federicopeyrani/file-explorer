@@ -1,6 +1,7 @@
 import { readdir } from "node:fs/promises";
 import { FileDescriptor } from "@/app/(main)/[[...path]]/@files/types";
 import {
+  emptyPath,
   encode,
   encodedToURL,
   joinPathToString,
@@ -11,32 +12,32 @@ import { SortDescriptor } from "@react-types/shared";
 import { base } from "@/config";
 
 export const getFiles = async (
-  uriPath: URIPath,
+  uriPath: URIPath = emptyPath,
   descriptor?: SortDescriptor,
 ) => {
   const url = uriPathToFileURL(base, uriPath);
   const node = await readdir(url);
 
-  const files = (
-    await Promise.all(
-      node
-        .map(async (name): Promise<FileDescriptor | undefined> => {
-          const fullPath = joinPathToString(url.pathname, name);
-          const stats = await Bun.file(fullPath).stat();
-          const isDirectory = stats.isDirectory();
+  const filesPromises = node
+    .map(async (name): Promise<FileDescriptor | undefined> => {
+      const fullPath = joinPathToString(url, name);
+      const stats = await Bun.file(fullPath).stat();
+      const isDirectory = stats.isDirectory();
 
-          return {
-            key: fullPath,
-            fullPath,
-            name,
-            kind: isDirectory ? "directory" : "file",
-            url: encodedToURL(...uriPath, ...encode(name)),
-            size: !isDirectory ? stats.size : undefined,
-          };
-        })
-        .map((promise) => promise.catch(console.warn)),
-    )
-  ).filter((file): file is FileDescriptor => file !== undefined);
+      return {
+        key: fullPath,
+        fullPath,
+        name,
+        kind: isDirectory ? "directory" : "file",
+        url: encodedToURL(...uriPath, ...encode(name)),
+        size: !isDirectory ? stats.size : undefined,
+      };
+    })
+    .map((promise) => promise.catch(console.warn));
+
+  const files = (await Promise.all(filesPromises)).filter(
+    (file): file is FileDescriptor => file !== undefined,
+  );
 
   if (!descriptor) {
     return files;

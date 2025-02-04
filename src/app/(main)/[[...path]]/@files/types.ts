@@ -1,15 +1,16 @@
 import { SortDescriptor } from "@react-types/shared";
+import { Encoded } from "@/app/(main)/[[...path]]/types";
 
 export type FileDescriptor = {
   key: string;
   fullPath: string;
   name: string;
   kind: "file" | "directory";
-  url: `/${string}`;
+  url: `/${string}` & Encoded;
   size?: number;
 };
 
-export type Action =
+export type FilesAction =
   | {
       type: "sort";
       sorting: SortDescriptor;

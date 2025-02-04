@@ -9,7 +9,10 @@ import {
   TableHeader,
   TableView,
 } from "@adobe/react-spectrum";
-import { Action, FileDescriptor } from "@/app/(main)/[[...path]]/@files/types";
+import {
+  FilesAction,
+  FileDescriptor,
+} from "@/app/(main)/[[...path]]/@files/types";
 import { formatSize } from "@/app/(main)/[[...path]]/utils";
 import { Icon } from "@/components";
 import { useDragAndDropMove } from "@/app/(main)/[[...path]]/@files/use-drag-and-drop-move";
@@ -25,15 +28,17 @@ export const FilesTable = ({
   action,
 }: {
   files: FileDescriptor[];
+  action?: (payload: FilesAction) => void;
   selectedKeys?: Selection;
   onSelectionChange?: (keys: Selection) => void;
-  action: (payload: Action) => void;
   sorting?: SortDescriptor;
   onSortingChange?: (descriptor: SortDescriptor) => void;
 }) => {
   const { dragAndDropHooks } = useDragAndDropMove({
     files,
-    onMove: (payload) => action({ type: "move", sorting, ...payload }),
+    onMove: action
+      ? (payload) => action({ type: "move", ...payload })
+      : undefined,
   });
 
   return (
@@ -75,7 +80,7 @@ export const FilesTable = ({
             <Cell>{file.size !== undefined && formatSize(file.size)}</Cell>
 
             <Cell>
-              <FileActionMenu file={file} action={action} />
+              {action && <FileActionMenu file={file} action={action} />}
             </Cell>
           </Row>
         )}

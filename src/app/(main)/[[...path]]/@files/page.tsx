@@ -1,8 +1,13 @@
 import { rename } from "node:fs/promises";
-import { Action, FileDescriptor } from "@/app/(main)/[[...path]]/@files/types";
+import {
+  FilesAction,
+  FileDescriptor,
+} from "@/app/(main)/[[...path]]/@files/types";
 import { PathParams } from "@/app/(main)/[[...path]]/types";
-import { emptyPath, uriPathToFileURL } from "@/app/(main)/[[...path]]/utils";
-import path from "node:path";
+import {
+  joinPathToString,
+  uriPathToFileURL,
+} from "@/app/(main)/[[...path]]/utils";
 import { base } from "@/config";
 import { FilesTableWrapper } from "@/app/(main)/[[...path]]/@files/files-table-wrapper";
 import {
@@ -11,8 +16,8 @@ import {
 } from "@/app/(main)/[[...path]]/@files/utils.server";
 
 export default async function Page({ params }: PathParams) {
-  const { path: uriPath } = await params;
-  const fileURL = uriPathToFileURL(base, uriPath);
+  const { path } = await params;
+  const fileURL = uriPathToFileURL(base, path);
 
   const file = Bun.file(fileURL);
   const stats = await file.stat();
@@ -21,32 +26,36 @@ export default async function Page({ params }: PathParams) {
     return <div>This is a file.</div>;
   }
 
-  const files = await getFiles(uriPath ?? emptyPath);
-  console.log("render", fileURL.pathname, files.length);
+  const files = await getFiles(path);
 
-  const action = async (payload: Action): Promise<FileDescriptor[]> => {
+  const action = async (payload: FilesAction): Promise<FileDescriptor[]> => {
     "use server";
 
-    console.log("action", payload.type);
+    console.log("action", payload);
 
     switch (payload.type) {
       case "sort":
         return sortFiles(files, payload.sorting);
+
       case "delete":
         for (const file of payload.files) {
           await Bun.file(file.fullPath).delete();
         }
-        return getFiles(uriPath ?? emptyPath, payload.sorting);
+        break;
+
       case "move":
+        if (payload.target.kind !== "directory") {
+          throw new Error("Cannot move files to a non-directory.");
+        }
+
         for (const file of payload.source) {
-          const name = path.basename(file.fullPath);
-          const newPath = path.join(payload.target.fullPath, name);
+          const newPath = joinPathToString(payload.target.fullPath, file.name);
           await rename(file.fullPath, newPath);
         }
-        return getFiles(uriPath ?? emptyPath, payload.sorting);
+        break;
     }
 
-    return files;
+    return getFiles(path, payload.sorting);
   };
 
   return <FilesTableWrapper files={files} action={action} />;
