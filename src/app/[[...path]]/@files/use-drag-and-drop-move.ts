@@ -32,7 +32,7 @@ export const useDragAndDropMove = ({
 
       const targetFile = findOrFail(target.key);
 
-      if (targetFile.isDirectory && target.dropPosition === "on") {
+      if (targetFile.kind === "directory" && target.dropPosition === "on") {
         return "move";
       }
 

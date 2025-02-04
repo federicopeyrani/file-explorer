@@ -1,12 +1,19 @@
-import { URIPath } from "@/app/[[...path]]/types";
-import path from "node:path";
 import { useMemo } from "react";
+import path from "path";
 import { Key } from "@react-types/shared";
+import { Encoded, NotEncoded, URIPath } from "@/app/[[...path]]/types";
 
 export const emptyPath: URIPath = [] as unknown as URIPath;
 
 export const decodePath = (path: URIPath = emptyPath) =>
   path.map(decodeURIComponent);
+
+export const joinPathToString = (...paths: ((string & NotEncoded) | URL)[]) =>
+  path.join(
+    ...paths
+      .map((it) => (it instanceof URL ? it.pathname : it))
+      .map(decodeURIComponent),
+  );
 
 export const uriPathToFileURL = (
   base: string,
@@ -20,11 +27,14 @@ export const uriPathToFileURL = (
   return Bun.pathToFileURL(pathname);
 };
 
-export const splitPath = (pathString: string): string[] =>
-  pathString.split(path.sep).slice(1);
+export const encode = (...segments: string[]) =>
+  segments.map(encodeURIComponent) as (string & Encoded)[];
 
-export const toURL = (segments: string[]) =>
-  `/${segments.map(encodeURIComponent).join("/")}`;
+export const encodedToURL = (...segments: (string & Encoded)[]) =>
+  `/${segments.join("/")}` as const;
+
+export const decodedToURL = (...segments: (string & NotEncoded)[]) =>
+  `/${segments.map(encodeURIComponent).join("/")}` as const;
 
 export const useCool = <T, R>(map: (it: T) => R, dep: T) =>
   useMemo(() => map(dep), [map, dep]);

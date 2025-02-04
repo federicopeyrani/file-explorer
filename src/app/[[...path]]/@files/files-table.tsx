@@ -11,24 +11,36 @@ import {
   TableHeader,
   TableView,
 } from "@adobe/react-spectrum";
-import { FileDescriptor } from "@/app/[[...path]]/@files/types";
+import { FileDescriptor, FilesArgs } from "@/app/[[...path]]/@files/types";
 import { formatSize } from "@/app/[[...path]]/utils";
 import { Icon } from "@/components";
 import { useDragAndDropMove } from "@/app/[[...path]]/@files/use-drag-and-drop-move";
+import { SortDescriptor } from "@react-types/shared";
+import { useState } from "react";
+import useSWR from "swr";
 
 export const FilesTable = ({
-  files,
+  dataKey,
   onDeleteAction,
   selectedKeys,
+  onSortAction,
   onMoveAction,
   onSelectionChange,
 }: {
-  files: FileDescriptor[];
+  dataKey: FilesArgs["key"];
   selectedKeys?: Selection;
   onSelectionChange?: (keys: Selection) => void;
+  onSortAction: (args: FilesArgs) => Promise<FileDescriptor[]>;
   onMoveAction?: (source: FileDescriptor[], target: FileDescriptor) => void;
-  onDeleteAction?: (file: FileDescriptor) => void;
+  onDeleteAction?: (file: FileDescriptor[]) => void;
 }) => {
+  const [sorting, setSorting] = useState<SortDescriptor>();
+
+  const { data: files = [], isLoading } = useSWR(
+    { key: dataKey, sorting } satisfies FilesArgs,
+    onSortAction,
+  );
+
   const { dragAndDropHooks } = useDragAndDropMove({
     files,
     onMove: onMoveAction,
@@ -36,28 +48,36 @@ export const FilesTable = ({
 
   return (
     <TableView
-      height="80%"
+      isQuiet
       selectedKeys={selectedKeys}
       onSelectionChange={onSelectionChange}
       selectionMode="multiple"
       selectionStyle="highlight"
       dragAndDropHooks={dragAndDropHooks}
+      sortDescriptor={sorting}
+      onSortChange={setSorting}
     >
       <TableHeader>
         <Column align="center" hideHeader>
           Icon
         </Column>
-        <Column allowsSorting>Name</Column>
-        <Column allowsSorting>Size</Column>
+        <Column key="name" allowsSorting>
+          Name
+        </Column>
+        <Column key="size" allowsSorting>
+          Size
+        </Column>
         <Column align="end" hideHeader>
           Actions
         </Column>
       </TableHeader>
-      <TableBody items={files}>
+      <TableBody items={files} loadingState={isLoading ? "sorting" : "idle"}>
         {(file) => (
           <Row href={file.url}>
             <Cell>
-              <Icon>{file.isDirectory ? "folder" : "description"}</Icon>
+              <Icon>
+                {file.kind === "directory" ? "folder" : "description"}
+              </Icon>
             </Cell>
 
             <Cell>{file.name}</Cell>
@@ -69,11 +89,11 @@ export const FilesTable = ({
                 isQuiet
                 onAction={(key) => {
                   if (key === "delete") {
-                    onDeleteAction?.(file);
+                    onDeleteAction?.([file]);
                   }
                 }}
                 disabledKeys={
-                  file.isDirectory || onDeleteAction === undefined
+                  file.kind === "directory" || onDeleteAction === undefined
                     ? ["delete"]
                     : []
                 }

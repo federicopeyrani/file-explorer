@@ -1,11 +1,17 @@
-import { readdir, rename } from "node:fs/promises";
-import { FileDescriptor } from "@/app/[[...path]]/@files/types";
+import { rename } from "node:fs/promises";
+import { FileDescriptor, FilesArgs } from "@/app/[[...path]]/@files/types";
 import { revalidatePath } from "next/cache";
 import { PathParams } from "@/app/[[...path]]/types";
-import { toURL, uriPathToFileURL } from "@/app/[[...path]]/utils";
+import {
+  emptyPath,
+  encodedToURL,
+  uriPathToFileURL,
+} from "@/app/[[...path]]/utils";
 import path from "node:path";
 import { base } from "@/config";
 import { FilesTableWrapper } from "@/app/[[...path]]/@files/files-table-wrapper";
+import { getFiles, sortFiles } from "@/app/[[...path]]/@files/utils.server";
+import { SWRClientProvider } from "@/app/swr-client-provider";
 
 export default async function Page({ params }: PathParams) {
   const { path: uriPath } = await params;
@@ -18,30 +24,18 @@ export default async function Page({ params }: PathParams) {
     return <div>This is a file.</div>;
   }
 
-  const node = await readdir(fileURL);
-
-  const files = (
-    await Promise.all(
-      node.map(async (name): Promise<FileDescriptor | undefined> => {
-        const fullPath = path.join(fileURL.pathname, name);
-        const stats = await Bun.file(fullPath).stat();
-        const isDirectory = stats.isDirectory();
-
-        return {
-          key: fullPath,
-          fullPath,
-          name,
-          isDirectory,
-          url: uriPath ? toURL([...uriPath, name]) : toURL([name]),
-          size: !isDirectory ? stats.size : undefined,
-        };
-      }),
-    )
-  ).filter((file): file is FileDescriptor => file !== undefined);
+  const files = await getFiles(uriPath ?? emptyPath);
 
   const refresh = async () => {
     "use server";
-    revalidatePath(uriPath ? toURL(uriPath) : "/");
+    revalidatePath(encodedToURL(...(uriPath ?? emptyPath)));
+  };
+
+  const handleSort = async ({
+    sorting = { column: "name", direction: "ascending" },
+  }: FilesArgs) => {
+    "use server";
+    return sortFiles(files, sorting);
   };
 
   const handleMove = async (
@@ -57,17 +51,31 @@ export default async function Page({ params }: PathParams) {
     await refresh();
   };
 
-  const handleDelete = async (file: FileDescriptor) => {
+  const handleDelete = async (files: FileDescriptor[]) => {
     "use server";
-    await Bun.file(file.fullPath).delete();
+    for (const file of files) {
+      await Bun.file(file.fullPath).delete();
+    }
     await refresh();
   };
 
   return (
-    <FilesTableWrapper
-      files={files}
-      onMoveAction={handleMove}
-      onDeleteAction={handleDelete}
-    />
+    <SWRClientProvider
+      fallback={[
+        [
+          {
+            key: `files${encodedToURL(...(uriPath ?? emptyPath))}`,
+          } satisfies FilesArgs,
+          files,
+        ],
+      ]}
+    >
+      <FilesTableWrapper
+        dataKey={`files${encodedToURL(...(uriPath ?? emptyPath))}`}
+        onSortAction={handleSort}
+        onMoveAction={handleMove}
+        onDeleteAction={handleDelete}
+      />
+    </SWRClientProvider>
   );
 }
