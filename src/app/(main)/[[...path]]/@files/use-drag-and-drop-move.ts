@@ -1,36 +1,41 @@
 import { FileDescriptor } from "@/app/(main)/[[...path]]/@files/types";
-import { useDragAndDrop, Key } from "@adobe/react-spectrum";
+import { Key, useDragAndDrop } from "@adobe/react-spectrum";
 import { error } from "@/utils";
+import { useRouter } from "next/navigation";
 
-const type = "custom-app-type-reorder";
+const customAppTypeKey = "text/x-custom-app-key";
+
+const customAppTypeFullPath = "text/x-custom-app-full-path";
 
 export const useDragAndDropMove = ({
   files,
   onMove,
+  onDragOutside,
 }: {
   files: FileDescriptor[];
-  onMove?: (payload: {
-    source: FileDescriptor[];
-    target: FileDescriptor;
-  }) => void;
+  onMove?: (payload: { source: string[]; target?: FileDescriptor }) => void;
+  onDragOutside?: () => void;
 }) => {
   const findOrFail = (key: Key) =>
     files.find((file) => file.key === key) ?? error("Failed to find file");
 
+  const router = useRouter();
+
   const { dragAndDropHooks } = useDragAndDrop({
-    acceptedDragTypes: [type],
+    acceptedDragTypes: ["application/octet-stream", customAppTypeKey],
+
     getItems: (keys) =>
-      [...keys]
-        .map(findOrFail)
-        .filter((item) => item !== undefined)
-        .map((item) => ({
-          [type]: item.key ?? error("Failed to find key"),
-          "text/plain": item.fullPath ?? error("Failed to find fullPath"),
-        })),
+      [...keys].map(findOrFail).map((item) => ({
+        [customAppTypeKey]: item.key,
+        [customAppTypeFullPath]: item.fullPath,
+        "text/plain": item.fullPath,
+      })),
+
     getAllowedDropOperations: () => ["move"],
+
     getDropOperation: (target) => {
       if (target.type === "root") {
-        return "cancel";
+        return "move";
       }
 
       const targetFile = findOrFail(target.key);
@@ -41,14 +46,40 @@ export const useDragAndDropMove = ({
 
       return "cancel";
     },
+
+    onDragEnd: ({ isInternal }) => {
+      if (!isInternal) {
+        onDragOutside?.();
+      }
+    },
+
+    onDropActivate: ({ target }) => {
+      if (target.type === "root") {
+        return;
+      }
+
+      const targetFile = findOrFail(target.key);
+      router.push(targetFile.url);
+    },
+
+    onRootDrop: async ({ items }) => {
+      const sourceFullPaths = items.map(async (item) =>
+        item.kind === "text"
+          ? item.getText(customAppTypeFullPath)
+          : error("Item is not text"),
+      );
+
+      onMove?.({ source: await Promise.all(sourceFullPaths) });
+    },
+
     onItemDrop: async ({ target, items }) => {
       const targetFile = findOrFail(target.key);
 
-      const sourceFiles = items
-        .map(async (item) =>
-          item.kind === "text" ? item.getText(type) : error("Item is not text"),
-        )
-        .map(async (key) => findOrFail(await key));
+      const sourceFiles = items.map(async (item) =>
+        item.kind === "text"
+          ? item.getText(customAppTypeFullPath)
+          : error("Item is not text"),
+      );
 
       onMove?.({
         source: await Promise.all(sourceFiles),

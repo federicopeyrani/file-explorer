@@ -12,6 +12,10 @@ export type FileDescriptor = {
 
 export type FilesAction =
   | {
+      type: "refresh";
+      sorting?: SortDescriptor;
+    }
+  | {
       type: "sort";
       sorting: SortDescriptor;
     }
@@ -22,8 +26,8 @@ export type FilesAction =
     }
   | {
       type: "move";
-      source: FileDescriptor[];
-      target: FileDescriptor;
+      source: string[];
+      target?: FileDescriptor;
       sorting?: SortDescriptor;
     }
   | {

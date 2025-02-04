@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Cell,
   Column,
@@ -39,6 +37,7 @@ export const FilesTable = ({
     onMove: action
       ? (payload) => action({ type: "move", ...payload })
       : undefined,
+    onDragOutside: action ? () => action({ type: "refresh" }) : undefined,
   });
 
   return (
@@ -68,7 +67,7 @@ export const FilesTable = ({
       </TableHeader>
       <TableBody items={files}>
         {(file) => (
-          <Row href={file.url}>
+          <Row textValue={file.name} href={file.url}>
             <Cell>
               <Icon>
                 {file.kind === "directory" ? "folder" : "description"}
