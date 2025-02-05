@@ -1,4 +1,7 @@
-import { FileDescriptor } from "@/app/(main)/[[...path]]/@files/types";
+import {
+  FileDescriptor,
+  FilesAction,
+} from "@/app/(main)/[[...path]]/@files/types";
 import { Key, useDragAndDrop } from "@adobe/react-spectrum";
 import { error } from "@/utils";
 import { useRouter } from "next/navigation";
@@ -9,12 +12,10 @@ const customAppTypeFullPath = "text/x-custom-app-full-path";
 
 export const useDragAndDropMove = ({
   files,
-  onMove,
-  onDragOutside,
+  action,
 }: {
   files: FileDescriptor[];
-  onMove?: (payload: { source: string[]; target?: FileDescriptor }) => void;
-  onDragOutside?: () => void;
+  action?: FilesAction<void>;
 }) => {
   const findOrFail = (key: Key) =>
     files.find((file) => file.key === key) ?? error("Failed to find file");
@@ -49,7 +50,7 @@ export const useDragAndDropMove = ({
 
     onDragEnd: ({ isInternal }) => {
       if (!isInternal) {
-        onDragOutside?.();
+        action?.({ type: "refresh" });
       }
     },
 
@@ -69,7 +70,7 @@ export const useDragAndDropMove = ({
           : error("Item is not text"),
       );
 
-      onMove?.({ source: await Promise.all(sourceFullPaths) });
+      action?.({ type: "move", source: await Promise.all(sourceFullPaths) });
     },
 
     onItemDrop: async ({ target, items }) => {
@@ -81,7 +82,8 @@ export const useDragAndDropMove = ({
           : error("Item is not text"),
       );
 
-      onMove?.({
+      action?.({
+        type: "move",
         source: await Promise.all(sourceFiles),
         target: targetFile,
       });
@@ -89,6 +91,6 @@ export const useDragAndDropMove = ({
   });
 
   return {
-    dragAndDropHooks: onMove ? dragAndDropHooks : undefined,
+    dragAndDropHooks: action ? dragAndDropHooks : undefined,
   };
 };

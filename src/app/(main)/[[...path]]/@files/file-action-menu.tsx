@@ -1,6 +1,6 @@
 import {
-  FilesAction,
   FileDescriptor,
+  FilesAction,
 } from "@/app/(main)/[[...path]]/@files/types";
 import { ActionMenu, Item } from "@adobe/react-spectrum";
 
@@ -9,7 +9,7 @@ export const FileActionMenu = ({
   action,
 }: {
   file: FileDescriptor;
-  action: (payload: FilesAction) => void;
+  action: FilesAction<void>;
 }) => {
   return (
     <ActionMenu

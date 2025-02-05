@@ -1,28 +1,40 @@
-"use client";
-
 import { ActionBarContainer, Selection } from "@adobe/react-spectrum";
-import { FilesTable } from "@/app/(main)/[[...path]]/@files/files-table";
-import { useActionState, useState } from "react";
+import { ReactNode, useActionState, useState } from "react";
 import { FilesActionBar } from "@/app/(main)/[[...path]]/@files/files-action-bar";
-import { SortDescriptor } from "@react-types/shared";
+import {
+  MultipleSelection,
+  Sortable,
+  SortDescriptor,
+} from "@react-types/shared";
 import {
   FileDescriptor,
   FilesAction,
+  FilesActionPayload,
 } from "@/app/(main)/[[...path]]/@files/types";
 import { withTransition } from "@/app/utils";
+import { SpectrumSelectionProps } from "@react-types/shared/src/selection";
 
-export const FilesTableWrapper = ({
+export const FilesViewWrapper = ({
+  children,
   files,
   action,
 }: {
+  children: (
+    props: {
+      files: FileDescriptor[];
+      action: FilesAction<void>;
+    } & MultipleSelection &
+      SpectrumSelectionProps &
+      Sortable,
+  ) => ReactNode;
   files: FileDescriptor[];
-  action: (payload: FilesAction) => Promise<FileDescriptor[]>;
+  action: FilesAction;
 }) => {
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set());
   const [sorting, setSorting] = useState<SortDescriptor>();
 
   const [state, dispatch] = useActionState(
-    async (_: FileDescriptor[], payload: FilesAction) => {
+    async (_: FileDescriptor[], payload: FilesActionPayload) => {
       const newState = await action({ sorting, ...payload });
 
       setSelectedKeys((selectedKeys) => {
@@ -44,17 +56,19 @@ export const FilesTableWrapper = ({
 
   return (
     <ActionBarContainer height="100%">
-      <FilesTable
-        files={state}
-        selectedKeys={selectedKeys}
-        onSelectionChange={setSelectedKeys}
-        action={withTransition(dispatch)}
-        sorting={sorting}
-        onSortingChange={withTransition((descriptor) => {
+      {children({
+        files: state,
+        action: withTransition(dispatch),
+        selectedKeys,
+        selectionMode: "multiple",
+        selectionStyle: "highlight",
+        onSelectionChange: setSelectedKeys,
+        sortDescriptor: sorting,
+        onSortChange: withTransition((descriptor) => {
           setSorting(descriptor);
           dispatch({ type: "sort", sorting: descriptor });
-        })}
-      />
+        }),
+      })}
 
       <FilesActionBar
         selectedKeys={selectedKeys}

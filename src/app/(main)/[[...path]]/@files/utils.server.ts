@@ -30,6 +30,8 @@ export const getFiles = async (
         name,
         kind: isDirectory ? "directory" : "file",
         url: encodedToURL(...uriPath, ...encode(name)),
+        created: stats.birthtime,
+        modified: stats.mtime,
         size: !isDirectory ? stats.size : undefined,
       };
     })

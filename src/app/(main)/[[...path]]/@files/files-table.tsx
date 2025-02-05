@@ -2,63 +2,59 @@ import {
   Cell,
   Column,
   Row,
-  Selection,
   TableBody,
   TableHeader,
   TableView,
+  useDateFormatter,
 } from "@adobe/react-spectrum";
 import {
-  FilesAction,
   FileDescriptor,
+  FilesAction,
 } from "@/app/(main)/[[...path]]/@files/types";
 import { formatSize } from "@/app/(main)/[[...path]]/utils";
 import { Icon } from "@/components";
 import { useDragAndDropMove } from "@/app/(main)/[[...path]]/@files/use-drag-and-drop-move";
-import { SortDescriptor } from "@react-types/shared";
+import { MultipleSelection, Sortable } from "@react-types/shared";
 import { FileActionMenu } from "@/app/(main)/[[...path]]/@files/file-action-menu";
+import { useFilesViewSettings } from "@/app/(main)/files-view-settings-provider";
 
 export const FilesTable = ({
   files,
-  selectedKeys,
-  onSelectionChange,
-  sorting,
-  onSortingChange,
   action,
+  ...props
 }: {
   files: FileDescriptor[];
-  action?: (payload: FilesAction) => void;
-  selectedKeys?: Selection;
-  onSelectionChange?: (keys: Selection) => void;
-  sorting?: SortDescriptor;
-  onSortingChange?: (descriptor: SortDescriptor) => void;
-}) => {
-  const { dragAndDropHooks } = useDragAndDropMove({
-    files,
-    onMove: action
-      ? (payload) => action({ type: "move", ...payload })
-      : undefined,
-    onDragOutside: action ? () => action({ type: "refresh" }) : undefined,
+  action?: FilesAction<void>;
+} & MultipleSelection &
+  Sortable) => {
+  const { dragAndDropHooks } = useDragAndDropMove({ files, action });
+
+  const formatter = useDateFormatter({
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
+
+  const { density } = useFilesViewSettings();
 
   return (
     <TableView
+      density={density}
       isQuiet
-      selectedKeys={selectedKeys}
-      onSelectionChange={onSelectionChange}
-      selectionMode="multiple"
-      selectionStyle="highlight"
       dragAndDropHooks={dragAndDropHooks}
-      sortDescriptor={sorting}
-      onSortChange={onSortingChange}
+      {...props}
     >
       <TableHeader>
         <Column align="center" hideHeader>
           Icon
         </Column>
-        <Column key="name" allowsSorting>
+        <Column key="name" allowsSorting width="1fr">
           Name
         </Column>
-        <Column key="size" allowsSorting>
+        <Column key="modified" allowsSorting width="0.25fr" minWidth={128}>
+          Modified
+        </Column>
+        <Column key="size" allowsSorting width="0.25fr" minWidth={128}>
           Size
         </Column>
         <Column align="end" hideHeader>
@@ -75,6 +71,8 @@ export const FilesTable = ({
             </Cell>
 
             <Cell>{file.name}</Cell>
+
+            <Cell>{formatter.format(file.modified)}</Cell>
 
             <Cell>{file.size !== undefined && formatSize(file.size)}</Cell>
 

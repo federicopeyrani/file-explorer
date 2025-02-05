@@ -1,9 +1,6 @@
 import path from "node:path";
 import { rename } from "node:fs/promises";
-import {
-  FilesAction,
-  FileDescriptor,
-} from "@/app/(main)/[[...path]]/@files/types";
+import { FilesAction } from "@/app/(main)/[[...path]]/@files/types";
 import { PathParams } from "@/app/(main)/[[...path]]/types";
 import {
   emptyPath,
@@ -12,12 +9,12 @@ import {
   uriPathToFileURL,
 } from "@/app/(main)/[[...path]]/utils";
 import { base } from "@/config";
-import { FilesTableWrapper } from "@/app/(main)/[[...path]]/@files/files-table-wrapper";
 import {
   getFiles,
   sortFiles,
 } from "@/app/(main)/[[...path]]/@files/utils.server";
 import { revalidatePath } from "next/cache";
+import { FilesView } from "@/app/(main)/[[...path]]/@files/files-view";
 
 export default async function Page({ params }: PathParams) {
   const { path: paramsPath } = await params;
@@ -32,7 +29,7 @@ export default async function Page({ params }: PathParams) {
 
   const files = await getFiles(paramsPath);
 
-  const action = async (payload: FilesAction): Promise<FileDescriptor[]> => {
+  const action: FilesAction = async (payload) => {
     "use server";
 
     switch (payload.type) {
@@ -61,5 +58,5 @@ export default async function Page({ params }: PathParams) {
     return getFiles(paramsPath, payload.sorting);
   };
 
-  return <FilesTableWrapper files={files} action={action} />;
+  return <FilesView files={files} action={action} />;
 }

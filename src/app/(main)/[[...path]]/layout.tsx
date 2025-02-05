@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 
-export default async function Layout({
+export default function Layout({
   files,
   side,
   top,
@@ -9,7 +9,9 @@ export default async function Layout({
     <>
       <aside className="row-start-2">{side}</aside>
       <header className="col-start-2">{top}</header>
-      <main className="row-span-2 h-full w-full overflow-hidden">{files}</main>
+      <main className="row-span-2 col-span-2 h-full w-full overflow-hidden">
+        {files}
+      </main>
     </>
   );
 }
