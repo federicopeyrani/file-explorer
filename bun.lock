@@ -5,6 +5,7 @@
       "name": "file-explorer",
       "dependencies": {
         "@adobe/react-spectrum": "^3.39.0",
+        "clsx": "^2.1.1",
         "material-symbols": "^0.28.1",
         "next": "15.1.6",
         "react": "^19.0.0",

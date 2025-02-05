@@ -1,5 +1,10 @@
 import styles from "./icon.module.css";
+import { ClassValue, clsx } from "clsx";
 
-export const Icon = ({ children }: { children: string }) => (
-  <span className={styles.Icon}>{children}</span>
-);
+export const Icon = ({
+  className,
+  children,
+}: {
+  className?: ClassValue;
+  children: string;
+}) => <span className={clsx(styles.Icon, className)}>{children}</span>;

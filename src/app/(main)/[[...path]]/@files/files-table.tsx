@@ -12,11 +12,11 @@ import {
   FilesAction,
 } from "@/app/(main)/[[...path]]/@files/types";
 import { formatSize } from "@/app/(main)/[[...path]]/utils";
-import { Icon } from "@/components";
 import { useDragAndDropMove } from "@/app/(main)/[[...path]]/@files/use-drag-and-drop-move";
 import { MultipleSelection, Sortable } from "@react-types/shared";
 import { FileActionMenu } from "@/app/(main)/[[...path]]/@files/file-action-menu";
 import { useFilesViewSettings } from "@/app/(main)/files-view-settings-provider";
+import { FileIcon } from "@/app/(main)/[[...path]]/@files/file-icon";
 
 export const FilesTable = ({
   files,
@@ -65,9 +65,7 @@ export const FilesTable = ({
         {(file) => (
           <Row textValue={file.name} href={file.url}>
             <Cell>
-              <Icon>
-                {file.kind === "directory" ? "folder" : "description"}
-              </Icon>
+              <FileIcon kind={file.kind} name={file.name} />
             </Cell>
 
             <Cell>{file.name}</Cell>
