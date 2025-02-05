@@ -1,7 +1,14 @@
 import { FilesViewSettings } from "@/app/(main)/files-view-settings-provider";
-import { ActionButton, Item, Menu, MenuTrigger } from "@adobe/react-spectrum";
+import { ActionButton } from "@adobe/react-spectrum";
 import { Icon } from "@/components";
-import { withSingleSelection } from "@/utils";
+
+const options = {
+  compact: "density_small",
+  regular: "density_medium",
+  spacious: "density_large",
+} as const;
+
+const keys = Object.keys(options) as (keyof typeof options)[];
 
 export const FilesViewDensitySelector = ({
   value,
@@ -10,25 +17,12 @@ export const FilesViewDensitySelector = ({
   value: FilesViewSettings["density"];
   onChange: (mode: FilesViewSettings["density"]) => void;
 }) => (
-  <MenuTrigger>
-    <ActionButton>
-      <Icon>
-        {value === "compact"
-          ? "density_small"
-          : value === "regular"
-            ? "density_medium"
-            : "density_large"}
-      </Icon>
-    </ActionButton>
-
-    <Menu
-      selectionMode="single"
-      selectedKeys={[value]}
-      onSelectionChange={withSingleSelection(onChange)}
-    >
-      <Item key="compact">Compact</Item>
-      <Item key="regular">Regular</Item>
-      <Item key="spacious">Comfortable</Item>
-    </Menu>
-  </MenuTrigger>
+  <ActionButton
+    onPress={() => {
+      const index = keys.indexOf(value);
+      onChange(keys[(index + 1) % keys.length]);
+    }}
+  >
+    <Icon>{options[value]}</Icon>
+  </ActionButton>
 );
